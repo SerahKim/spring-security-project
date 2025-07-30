@@ -18,3 +18,8 @@ spring:
   sql:
     init:
       mode: always
+
+jwt:
+  secret: /oVkVWfInoIeSV8iKChIceQiQpSV4OvbcRZWVj8O1zLemdU6MgUwaB+7fQe21XNwb9IintjNpb5BNTB4yAF9nA==
+  access-token-validity-in-seconds: 900 # 15분 = 15 * 60
+  refresh-token-validity-in-seconds: 1209600 # 14일 = 14 * 24 * 60 * 60

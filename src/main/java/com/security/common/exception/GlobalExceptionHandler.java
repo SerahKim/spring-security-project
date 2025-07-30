@@ -1,6 +1,7 @@
 package com.security.common.exception;
 
 import com.security.common.response.ApiResponse;
+import io.jsonwebtoken.JwtException;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +23,13 @@ public class GlobalExceptionHandler {
         );
 
         return new ResponseEntity<>(response, ex.getHttpStatus());
+    }
+
+    // JwtException 핸들러
+    @ExceptionHandler(JwtException.class)
+    public ResponseEntity<ApiResponse<Void>> handleJwtException(JwtException ex) {
+        ApiResponse<Void> response = ApiResponse.error(401, ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
     // 유효성 검사 실패 예외 처리

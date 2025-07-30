@@ -10,7 +10,7 @@ CREATE TABLE tbl_user (
                        password VARCHAR(255) NOT NULL,
                        name VARCHAR(100) NOT NULL,
                        phone_number VARCHAR(20) NOT NULL ,
-                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                       created_at DATETIME,
                        updated_at DATETIME
 );
 
