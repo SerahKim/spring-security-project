@@ -1,0 +1,4 @@
+CREATE DATABASE IF NOT EXISTS hashsnap_db;
+CREATE USER IF NOT EXISTS 'hashsnap'@'%' IDENTIFIED BY 'hashsnap';
+GRANT ALL PRIVILEGES ON hashsnap_db.* TO 'hashsnap'@'%';
+FLUSH PRIVILEGES;
