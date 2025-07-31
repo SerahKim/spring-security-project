@@ -1,6 +1,5 @@
 DROP TABLE IF EXISTS tbl_refresh_token;
 DROP TABLE IF EXISTS tbl_user;
-DROP TABLE IF EXISTS tbl_password_reset;
 
 # user 정보를 위한 테이블
 CREATE TABLE tbl_user (
@@ -12,16 +11,6 @@ CREATE TABLE tbl_user (
                        phone_number VARCHAR(20) NOT NULL ,
                        created_at DATETIME,
                        updated_at DATETIME
-);
-
-# 비밀번호 변경 시 이메일 인증을 위한 테이블
-CREATE TABLE tbl_password_reset (
-                        token_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-                        token VARCHAR(255) NOT NULL UNIQUE,
-                        email VARCHAR(255) NOT NULL,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        expired_at DATETIME NOT NULL,
-                        is_verified BOOLEAN DEFAULT FALSE
 );
 
 # refresh token 저장을 위한 테이블
