@@ -3,6 +3,7 @@ package com.security.user.controller;
 import com.security.common.response.ApiResponse;
 import com.security.user.dto.LoginReqDTO;
 import com.security.user.dto.LoginResDTO;
+import com.security.user.dto.MyInfoResDTO;
 import com.security.user.dto.SignupReqDTO;
 import com.security.user.service.UserService;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,9 +35,9 @@ public class UserController {
 
         userService.signup(signupReqDTO);
 
-        ApiResponse<Void> response = ApiResponse.success(HttpStatus.CREATED, "회원가입이 완료되었습니다.");
+        ApiResponse<Void> apiResponse = ApiResponse.success(HttpStatus.CREATED, "회원가입이 완료되었습니다.");
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
     }
 
     // 로그인
@@ -70,4 +72,18 @@ public class UserController {
 
         return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
     }
+
+    // 비밀번호 재발급
+
+    // 내 정보 조회
+    @GetMapping("/my")
+    public ResponseEntity<ApiResponse<MyInfoResDTO>> getMyInfo() {
+
+        MyInfoResDTO myInfoResDTO = userService.getMyInfo();
+
+        ApiResponse<MyInfoResDTO> apiResponse = ApiResponse.success(HttpStatus.OK, "내 정보 조회에 성공하였습니다.", myInfoResDTO);
+
+        return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
+    }
+
 }

@@ -1,8 +1,10 @@
 package com.security.user.service;
 
 import com.security.auth.jwt.JwtTokenProvider;
+import com.security.auth.security.util.SecurityUtils;
 import com.security.user.dto.LoginReqDTO;
 import com.security.user.dto.LoginResDTO;
+import com.security.user.dto.MyInfoResDTO;
 import com.security.user.dto.SignupReqDTO;
 import com.security.user.entity.RefreshTokenEntity;
 import com.security.user.entity.UserEntity;
@@ -11,12 +13,14 @@ import com.security.user.mapper.UserMapper;
 import com.security.user.repository.RefreshTokenRepository;
 import com.security.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.apache.catalina.security.SecurityUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Optional;
 
 import static com.security.user.exception.UserException.*;
 
@@ -73,12 +77,13 @@ public class UserService {
             throw pwdNotFoundException();
         }
 
-        // userId
+        // userId, email
         Long userId = userEntity.getUserId();
+        String email = userEntity.getEmail();
 
         // JWT 토큰 발급
-        String accessToken = jwtTokenProvider.generateAccessToken(userId);
-        String refreshToken = jwtTokenProvider.generateRefreshToken(userId);
+        String accessToken = jwtTokenProvider.generateAccessToken(userId, email);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(userId,email);
 
         // refresh token db 저장
         saveRefreshToken(userId, refreshToken);
@@ -134,10 +139,30 @@ public class UserService {
         }
 
         // access token 재발급
-        String accessToken = jwtTokenProvider.generateAccessToken(userEntity.getUserId());
+        String accessToken = jwtTokenProvider.generateAccessToken(userEntity.getUserId(), userEntity.getEmail());
 
         // access token 반환
         return new LoginResDTO(accessToken, null);
+
+    }
+
+    // 비밀번호 재발급
+
+    // 내 정보 조회
+    @Transactional(readOnly = true)
+    public MyInfoResDTO getMyInfo() {
+
+        // 현재 인증된 이메일 조회
+        String email = SecurityUtils.getCurrentEmail();
+
+        // DB에서 사용자 정보 조회
+        UserEntity userEntity = userRepository.findByEmail(email)
+                .orElseThrow(UserException::userNotFoundException);
+
+        // UserEntity -> MyInfoResDTO 변환
+        MyInfoResDTO myInfoResDTO = userMapper.toMyInfoResDTO(userEntity);
+
+        return myInfoResDTO;
 
     }
 

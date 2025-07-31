@@ -5,6 +5,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -18,41 +19,34 @@ import java.util.Base64;
 import java.util.Date;
 
 @Component
+@RequiredArgsConstructor
 public class JwtTokenProvider {
 
+    private SecretKey secretKey;
     private final UserDetailsService userDetailsService;
+
     @Value("${jwt.secret}")
     private String secret;
 
-    // Acess Token 만료시간 (분)
     @Value("${jwt.access-token-validity-in-seconds}")
     private long accessTokenValidityInSeconds;
 
-    // Refresh Token 만료시간 (일)
     @Value("${jwt.refresh-token-validity-in-seconds}")
     private long refreshTokenValidityInSeconds;
 
-    private SecretKey secretKey;
-
-    public JwtTokenProvider(UserDetailsService userDetailsService) {
-        this.userDetailsService = userDetailsService;
-    }
-
     @PostConstruct
     public void init() {
-        // Base64로 인코딩된 문자열 -> 바이트 배열로 디코딩
         byte[] keyBytes = Base64.getDecoder().decode(secret);
-
-        // 디코딩된 바이트 배열 -> SecretKey 객체를 생성(HMAC SHA 알고리즘 사용)
         this.secretKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
-    private String generateToken(Long userId, long validityInSeconds) {
+    private String generateToken(Long userId, String email, long validityInSeconds) {
         Instant now = Instant.now();
         Instant expiry = now.plusSeconds(validityInSeconds);
 
         return Jwts.builder()
                 .subject(userId.toString())
+                .claim("email", email)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiry))
                 .signWith(secretKey, Jwts.SIG.HS512)
@@ -60,25 +54,19 @@ public class JwtTokenProvider {
     }
 
     // Access Token 생성
-    public String generateAccessToken(Long userId) {
-        return generateToken(userId, accessTokenValidityInSeconds);
+    public String generateAccessToken(Long userId, String email) {
+        return generateToken(userId, email, accessTokenValidityInSeconds);
     }
 
     // Refresh Token 생성
-    public String generateRefreshToken(Long userId) {
-        return generateToken(userId, refreshTokenValidityInSeconds);
+    public String generateRefreshToken(Long userId, String email) {
+        return generateToken(userId, email, refreshTokenValidityInSeconds);
     }
 
     // 헤더에서 토큰 꺼내기
-    // request header => Authorization: Bearer accessToken
     public String getToken(HttpServletRequest request) {
         String bearer = request.getHeader("Authorization");
-
-        if (bearer != null && bearer.startsWith("Bearer ")) {
-            return bearer.substring(7);
-        }
-
-        return null;
+        return (bearer != null && bearer.startsWith("Bearer ")) ? bearer.substring(7) : null;
     }
 
     // 토큰에서 userId 추출
@@ -88,11 +76,20 @@ public class JwtTokenProvider {
                 .build()
                 .parseSignedClaims(token)
                 .getPayload()
-                .getSubject()
-        );
+                .getSubject());
     }
 
-    // 토큰에서 생성 시간 추출
+    // 토큰에서 email 추출
+    public String getEmailFromToken(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("email", String.class);
+    }
+
+    // 토큰 발급 시간
     public Instant getIssuedAt(String token) {
         return Jwts.parser()
                 .verifyWith(secretKey)
@@ -103,7 +100,7 @@ public class JwtTokenProvider {
                 .toInstant();
     }
 
-    // 토큰에서 만료 시간 추출
+    // 토큰 만료 시간
     public Instant getExpiredAt(String token) {
         return Jwts.parser()
                 .verifyWith(secretKey)
@@ -114,12 +111,11 @@ public class JwtTokenProvider {
                 .toInstant();
     }
 
-    // userId 기반 Authentication 객체 생성
+    // 이메일을 통해 인증 정보 조회
     public Authentication getAuthentication(String token) {
-        Long userId = getUserIdFromToken(token);
+        String email = getEmailFromToken(token);
 
-        // userId를 통해 사용자 정보 로드
-        UserDetails userDetails = userDetailsService.loadUserByUsername(userId.toString());
+        UserDetails userDetails = userDetailsService.loadUserByUsername(email);
 
         return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
     }
@@ -142,4 +138,3 @@ public class JwtTokenProvider {
         }
     }
 }
-

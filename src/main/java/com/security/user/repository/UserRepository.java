@@ -9,7 +9,7 @@ import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
     boolean existsByEmail(String email);
-
+    
     Optional<UserEntity> findByEmail(@NotBlank(message = "이메일은 필수입니다.") @Email String email);
 
     UserEntity findByUserId(Long userId);
