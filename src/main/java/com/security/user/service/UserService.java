@@ -18,8 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
-import static com.security.user.exception.UserException.duplicateEmailException;
-import static com.security.user.exception.UserException.pwdNotFoundException;
+import static com.security.user.exception.UserException.*;
 
 @Service
 @RequiredArgsConstructor
@@ -111,5 +110,35 @@ public class UserService {
         refreshTokenRepository.save(refreshTokenEntity);
     }
 
+    // Access Token 재발급
+    @Transactional
+    public LoginResDTO reissueAccessToken(String refreshToken) {
+
+        // 사용자로부터 받은 토큰 유효성 검사
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw tokenNotFoundException();
+        }
+
+        // DB 조회 및 유효성 검사
+        RefreshTokenEntity refreshTokenEntity = refreshTokenRepository.findByRefreshToken(refreshToken)
+                .orElseThrow(UserException::tokenNotFoundException);
+
+        // refresh token 만료일 확인
+        if (refreshTokenEntity.getExpiredAt().isBefore(LocalDateTime.now())) {
+            throw expiredTokenException();
+        }
+
+        UserEntity userEntity = refreshTokenEntity.getUserEntity();
+        if (userEntity == null) {
+            throw userNotFoundException();
+        }
+
+        // access token 재발급
+        String accessToken = jwtTokenProvider.generateAccessToken(userEntity.getUserId());
+
+        // access token 반환
+        return new LoginResDTO(accessToken, null);
+
+    }
 
 }

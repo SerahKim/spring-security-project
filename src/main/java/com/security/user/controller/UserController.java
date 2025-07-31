@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -55,6 +56,17 @@ public class UserController {
         response.setHeader("Set-Cookie", cookie.toString());
 
         ApiResponse<LoginResDTO> apiResponse = ApiResponse.success(HttpStatus.OK, "로그인에 성공하였습니다.", loginResDTO);
+
+        return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
+    }
+
+    // Access Token 재발급
+    @PostMapping("/token")
+    public ResponseEntity<ApiResponse<LoginResDTO>> reissueAccessToken(@CookieValue("refreshToken") String refreshToken) {
+
+        LoginResDTO loginResDTO = userService.reissueAccessToken(refreshToken);
+
+        ApiResponse<LoginResDTO> apiResponse = ApiResponse.success(HttpStatus.OK, "토큰이 재발급되었습니다.", loginResDTO);
 
         return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
     }
