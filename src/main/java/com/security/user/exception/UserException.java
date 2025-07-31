@@ -10,7 +10,14 @@ public class UserException extends BusinessException {
         super(errorCode);
     }
 
-    public static UserException duplicateEmail() {
+    public static UserException userNotFoundException() {
+        return new UserException(UserErrorCode.USER_NOT_FOUND);
+    }
+
+    public static UserException pwdNotFoundException() {
+        return new UserException(UserErrorCode.PWD_NOT_FOUND);
+    }
+    public static UserException duplicateEmailException() {
         return new UserException(UserErrorCode.EMAIL_DUPLICATED);
     }
 

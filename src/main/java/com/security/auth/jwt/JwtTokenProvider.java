@@ -92,6 +92,28 @@ public class JwtTokenProvider {
         );
     }
 
+    // 토큰에서 생성 시간 추출
+    public Instant getIssuedAt(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getIssuedAt()
+                .toInstant();
+    }
+
+    // 토큰에서 만료 시간 추출
+    public Instant getExpiredAt(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .getExpiration()
+                .toInstant();
+    }
+
     // userId 기반 Authentication 객체 생성
     public Authentication getAuthentication(String token) {
         Long userId = getUserIdFromToken(token);

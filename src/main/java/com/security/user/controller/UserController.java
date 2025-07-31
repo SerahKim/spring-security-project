@@ -1,6 +1,8 @@
 package com.security.user.controller;
 
 import com.security.common.response.ApiResponse;
+import com.security.user.dto.LoginReqDTO;
+import com.security.user.dto.LoginResDTO;
 import com.security.user.dto.SignupReqDTO;
 import com.security.user.service.UserService;
 import jakarta.validation.Valid;
@@ -28,5 +30,16 @@ public class UserController {
         ApiResponse<Void> response = ApiResponse.success(HttpStatus.CREATED, "회원가입이 완료되었습니다.");
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    // 로그인
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<LoginResDTO>> login(@Valid @RequestBody LoginReqDTO loginReqDTO) {
+
+        LoginResDTO loginResDTO = userService.login(loginReqDTO);
+
+        ApiResponse<LoginResDTO> response = ApiResponse.success(HttpStatus.OK, "로그인에 성공하였습니다.", loginResDTO);
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }

@@ -1,24 +1,35 @@
 package com.security.user.service;
 
+import com.security.auth.jwt.JwtTokenProvider;
+import com.security.user.dto.LoginReqDTO;
+import com.security.user.dto.LoginResDTO;
 import com.security.user.dto.SignupReqDTO;
+import com.security.user.entity.RefreshTokenEntity;
 import com.security.user.entity.UserEntity;
+import com.security.user.exception.UserException;
 import com.security.user.mapper.UserMapper;
+import com.security.user.repository.RefreshTokenRepository;
 import com.security.user.repository.UserRepository;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.security.user.exception.UserException.duplicateEmail;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+
+import static com.security.user.exception.UserException.duplicateEmailException;
+import static com.security.user.exception.UserException.pwdNotFoundException;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
 
     // 이메일 중복 확인
     @Transactional(readOnly = true)
@@ -36,7 +47,7 @@ public class UserService {
 
         // 이메일 중복 확인
         if (!checkAvailEmail(signupReqDTO.getEmail())) {
-            throw duplicateEmail();
+            throw duplicateEmailException();
         }
 
         /* UserEntity 저장 */
@@ -48,6 +59,56 @@ public class UserService {
 
         // UserEntity 저장
         userRepository.save(userEntity);
+    }
+
+    // 로그인
+    @Transactional
+    public LoginResDTO login(LoginReqDTO loginReqDTO) {
+
+        // 이메일로 사용자 조회
+        UserEntity userEntity = userRepository.findByEmail(loginReqDTO.getEmail())
+                .orElseThrow(UserException::userNotFoundException);
+
+        // 비밀번호 일치 여부 확인
+        if (!passwordEncoder.matches(loginReqDTO.getPassword(), userEntity.getPassword())) {
+            throw pwdNotFoundException();
+        }
+
+        // userId
+        Long userId = userEntity.getUserId();
+
+        // JWT 토큰 발급
+        String accessToken = jwtTokenProvider.generateAccessToken(userId);
+        String refreshToken = jwtTokenProvider.generateRefreshToken(userId);
+
+        // refresh token db 저장
+        saveRefreshToken(userId, refreshToken);
+
+        // LoginResDTO 반환
+        return new LoginResDTO(accessToken, refreshToken);
+
+    }
+
+    // refresh token DB 저장
+    private void saveRefreshToken(Long userId, String refreshToken) {
+
+        // 해당 userId를 가진 UserEntity 조회
+        UserEntity userEntity = userRepository.findByUserId(userId);
+
+        // 기존 refresh token 있다면 삭제
+        refreshTokenRepository.findByUserEntity_UserId(userId).ifPresent(refreshTokenRepository::delete);
+
+        // refresh token DB 저장
+        LocalDateTime issuedAt = LocalDateTime.ofInstant(jwtTokenProvider.getIssuedAt(refreshToken), ZoneId.systemDefault());
+        LocalDateTime expiredAt = LocalDateTime.ofInstant(jwtTokenProvider.getExpiredAt(refreshToken), ZoneId.systemDefault());
+        RefreshTokenEntity refreshTokenEntity = RefreshTokenEntity.builder()
+                .userEntity(userEntity)
+                .refreshToken(refreshToken)
+                .issuedAt(issuedAt)
+                .expiredAt(expiredAt)
+                .build();
+
+        refreshTokenRepository.save(refreshTokenEntity);
     }
 
 
