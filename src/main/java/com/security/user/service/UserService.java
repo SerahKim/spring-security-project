@@ -13,14 +13,12 @@ import com.security.user.mapper.UserMapper;
 import com.security.user.repository.RefreshTokenRepository;
 import com.security.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.catalina.security.SecurityUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Optional;
 
 import static com.security.user.exception.UserException.*;
 
@@ -145,8 +143,6 @@ public class UserService {
         return new LoginResDTO(accessToken, null);
 
     }
-
-    // 비밀번호 재발급
 
     // 내 정보 조회
     @Transactional(readOnly = true)

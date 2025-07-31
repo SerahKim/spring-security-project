@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("api/user")
+@RequestMapping("/api/user")
 public class UserController {
 
     private final UserService userService;
@@ -72,8 +72,6 @@ public class UserController {
 
         return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
     }
-
-    // 비밀번호 재발급
 
     // 내 정보 조회
     @GetMapping("/my")
