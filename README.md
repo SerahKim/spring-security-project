@@ -12,6 +12,8 @@ ___
 - Refresh Token DB 관리
 
 ## 🔧 2. 실행 방법
+### 0. github 접속
+- [github 주소](https://github.com/SerahKim/spring-security-project)
 ### 1. 프로젝트 클론
 ```
 git clone https://github.com/SerahKim/spring-security-project.git
@@ -125,11 +127,11 @@ SecurityApplication 실행
   ````
 ### 내 정보 조회
 - **GET** `/api/user/my`
-- Request Header
+ Request Header
 
   | 필드명 | 타입 | 값                            | 필수 여부 |
-    | --- | --- |------------------------------| -- |
--   | `Authorization` | String | `Bearer eyJhbGc...`          | 필수 |
+  | --- | --- |------------------------------| -- |
+  | `Authorization` | String | `Bearer eyJhbGc...`          | 필수 |
   | `Cookie` | String | `refreshToken=eyJhbGciOi...` | 필수 |
 - Response Body
   ````
